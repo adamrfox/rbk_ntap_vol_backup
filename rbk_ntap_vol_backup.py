@@ -183,9 +183,9 @@ if __name__ == "__main__":
     else:
         rubrik = rubrik_cdm.Connect(rubrik_host, api_token=token)
     if not ntap_user:
-        python_input("NTAP User: ")
+        ntap_user = python_input("NTAP User: ")
     if not ntap_password:
-        getpass.getpass("NTAP Password: ")
+        ntap_password = getpass.getpass("NTAP Password: ")
     try:
         _create_unverified_https_context = ssl._create_unverified_context
     except AttributeError:
