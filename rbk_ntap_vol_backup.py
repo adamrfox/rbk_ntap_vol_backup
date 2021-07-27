@@ -47,9 +47,9 @@ def python_input(message):
 def get_svm_map(svm_map_file):
     with open(svm_map_file) as fp:
         for line in fp:
+            line = line.rstrip()
             if not line or line.startswith('#'):
                 continue
-            line = line.rstrip()
             lf = line.split(',')
             svm_map[lf[0]] = lf[1]
     fp.close()
