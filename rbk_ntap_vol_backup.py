@@ -126,7 +126,7 @@ def get_vol_name_from_rbk_share_list(rbk_sh_svm, rbk_sh, share_list, vol_list):
 def create_fs_template(fst_host, fst_vol, fst_proto):
     name = '_'.join([fst_host, fst_vol, fst_proto])
     if fst_proto == "NFS":
-        payload = [{"includes": ["x"], "excludes": [".snapshot/**"], "name": name, "shareType": "NFS", "allowBackupHiddenFoldersInNetworkMounts": True}]
+        payload = [{"includes": ["x"], "excludes": [".snapshot"], "name": name, "shareType": "NFS", "allowBackupHiddenFoldersInNetworkMounts": True}]
     else:
         payload = [{"includes": ["x"], "name": name, "shareType": "SMB"}]
     return(payload)
