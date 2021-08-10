@@ -128,10 +128,10 @@ def create_fs_template(fst_host, fst_vol, fst_proto):
     if fst_proto == "NFS":
         payload = [{"includes": ["x"], "excludes": [".snapshot"], "name": name, "shareType": "NFS", "allowBackupHiddenFoldersInNetworkMounts": True}]
     else:
-        payload = [{"includes": ["x"], "name": name, "shareType": "SMB"}]
+        payload = [{"includes": ["x"], "excludes": ["~snapshot"], "name": name, "shareType": "SMB"}]
     return(payload)
 
-def get_vol_from_path(vol_list, svm_name, hostname, path):
+def get_vol_from_path(vol_list, svm_name, path):
     for v in vol_list[svm_name]:
         if vol_list[svm_name][v]['path'] == path:
             return(v)
@@ -306,7 +306,7 @@ if __name__ == "__main__":
         if not valid_rubrik_share(hs, svm_map, share_list, vol_list):
            continue
         svm_name = get_svm_name(svm_map, hs['hostname'])
-        get_vol_from_path(vol_list, svm_name, hs['hostname'], hs['exportPoint'])
+        get_vol_from_path(vol_list, svm_name, hs['exportPoint'])
         rub_share_inst = {'sh_id': hs['id'], 'h_id': hs['hostId'], 'hostname': hs['hostname'],
                           'protocol': hs['shareType'], 'name': hs['exportPoint']}
         try:
