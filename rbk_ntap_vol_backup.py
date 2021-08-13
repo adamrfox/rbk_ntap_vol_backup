@@ -6,6 +6,7 @@ import getopt
 import getpass
 import collections
 import rubrik_cdm
+from datetime import datetime
 import urllib3
 urllib3.disable_warnings()
 sys.path.append('./NetApp')
@@ -55,18 +56,57 @@ def get_svm_map(svm_map_file):
     fp.close()
     return(svm_map)
 
+def is_exception(vol_exceptions, svm, vol):
+    for ve in vol_exceptions:
+        if ve['host'] == svm_map[svm] and ve['vol'] == vol:
+            return(True)
+    return(False)
+
 def purge_lists(qtree_list, vol_list):
     new_qtree_list = {}
     new_vol_list = {}
+    vf = []
+    vol_exceptions = []
     dprint("\nOLD VOL LIST: " + str(vol_list))
+    if CUSTOMER_MODS:
+        try:
+            ef = open(exceptions_file, "r")
+            for line in ef:
+                line = line.rstrip()
+                if not line or line.startswith('#'):
+                    continue
+                lf = line.split(':')
+                ve_inst = {}
+                for svm in svm_map:
+                    if svm_map[svm] == lf[0]:
+                        ve_inst = {'host': lf[0], 'vol': lf[1]}
+                        break
+                if not ve_inst:
+                    sys.stderr.write("Can't map hostname: " + lf[0] + "to an SVM.  Skipping exception\n")
+                    continue
+                vol_exceptions.append(ve_inst)
+            ef.close()
+            dprint("VOL_EXCEPT: " + str(vol_exceptions))
+        except:
+            pass
     for svm in vol_list:
         for vol in vol_list[svm]:
+            if CUSTOMER_MODS:
+                vf = vol.split('_')
+                try:
+                    if 'b' not in vf[2]:
+                        if not vol_exceptions or not is_exception(vol_exceptions, svm, vol):
+                            continue
+                except IndexError:
+                    if not vol_exceptions or not is_exception(vol_exceptions, svm, vol):
+                        continue
             if vol_list[svm][vol]['unix_qtree'] and vol_list[svm][vol]['ntfs_qtree']:
                 try:
                     new_vol_list[svm][vol] = {'path': vol_list[svm][vol]['path']}
                 except:
                     new_vol_list[svm] = {}
                     new_vol_list[svm][vol] = {'path': vol_list[svm][vol]['path']}
+
     dprint("\nOLD_QTREE_LIST:" + str(qtree_list))
     for svm in qtree_list:
         for vol in qtree_list[svm]:
@@ -74,7 +114,10 @@ def purge_lists(qtree_list, vol_list):
                 new_vol_list[svm][vol]
             except:
                 continue
-            new_qtree_list[svm] = {}
+            try:
+                new_qtree_list[svm]
+            except:
+                new_qtree_list[svm] = {}
             new_qtree_list[svm][vol] = {}
             new_qtree_list[svm][vol] = qtree_list[svm][vol]
     return(new_qtree_list, new_vol_list)
@@ -137,6 +180,12 @@ def get_vol_from_path(vol_list, svm_name, path):
             return(v)
     return("")
 
+def log_write(name, message):
+    fp = open(name, "a")
+    fp.write(message + "\n")
+    fp.close()
+    return
+
 if __name__ == "__main__":
     ntap_user = ""
     ntap_password = ""
@@ -144,6 +193,7 @@ if __name__ == "__main__":
     rubrik_password = ""
     token = ""
     svm_map_file = "svm_map.csv"
+    log_file = ""
     DEBUG = False
     svm_list = []
     vol_list = {}
@@ -153,9 +203,11 @@ if __name__ == "__main__":
     rubrik_share_list = {}
     timeout = 60
     NAS_DA = False
+    CUSTOMER_MODS = True
+    exceptions_file = "vol_exceptions.txt"
 
-    optlist, args = getopt.getopt(sys.argv[1:], 'Dc:t:n:hm:', ['--DEBUG', '--rubrik_creds=', '--ntap_creds=',
-                                                                 '--token=', '--help', '--mapfile='])
+    optlist, args = getopt.getopt(sys.argv[1:], 'Dc:t:n:hm:M', ['--DEBUG', '--rubrik_creds=', '--ntap_creds=',
+                                                                 '--token=', '--help', '--mapfile=', '--mods'])
     for opt, a in optlist:
         if opt in ('-D', '--DEBUG'):
             DEBUG = True
@@ -169,6 +221,9 @@ if __name__ == "__main__":
             usage()
         if opt in ('-m', '--mapfile'):
             svm_map_file = a
+        if opt in ('-M', '--mods'):
+            CUSTOMER_MODS = False
+
     try:
         (ntap_host, rubrik_host) = args
     except:
@@ -316,6 +371,11 @@ if __name__ == "__main__":
             rubrik_share_list[get_svm_name(svm_map, hs['hostname'])].append(rub_share_inst)
     dprint("\nRBK_SHARES: " + str(rubrik_share_list))
     print("Checking and Updating Rubrik Fileset Templates")
+    now = datetime.now()
+    now_s = now.strftime("%Y-%m-%dT%H.%M.%S")
+    log_file = "qtree_fileset_log_" + now_s + ".log"
+    fp = open(log_file, "w")
+    fp.close()
     for rbk_sh_svm in rubrik_share_list:
         for rbk_sh in rubrik_share_list[rbk_sh_svm]:
             fs_info = {}
@@ -326,6 +386,7 @@ if __name__ == "__main__":
                 print("Creating new fileset template: " + fs_template_name)
                 payload = create_fs_template(svm_map[rbk_sh_svm], vol_name, rbk_sh['protocol'])
                 new_fst = rubrik.post('internal', '/fileset_template/bulk', payload, timeout=timeout)
+                log_write(log_file, "TEMPLATE_CREATE," + fs_template_name)
                 dprint(str(new_fst))
                 if new_fst['total'] == 0:
                     sys.stderr.write("Error creating fileset template: " + fs_template_name + "\n")
@@ -334,6 +395,7 @@ if __name__ == "__main__":
                 payload = [{'isPassthrough': NAS_DA, 'enableSymlinkResolution': False, 'enableHardlinkSupport': False,
                            'shareId': rbk_sh['sh_id'], 'templateId': fs_info['data'][0]['id']}]
                 fs_inst = rubrik.post("internal", "/fileset/bulk", payload, timeout=60)
+                log_write(log_file, "TEMPLATE_ADD," + fs_template_name + "," + rbk_sh['name'])
                 dprint("FS_INST = " + str(fs_inst))
             fst_id = fs_info['data'][0]['id']
             dprint(fs_info['data'][0]['name'] + " : " + str(fst_id))
@@ -350,9 +412,11 @@ if __name__ == "__main__":
                         include_list.append("/" + q + "/**")
             if collections.Counter(include_list) == collections.Counter(fs_info['data'][0]['includes']):
                 print("Template: " + fs_info['data'][0]['name'] + " : " + "OK")
+                log_write(log_file, "TEMPLATE_STATUS," + fs_info['data'][0]['name'] + ",No Change")
                 continue
             fs_info['data'][0]['includes'] = include_list
             print("Updating Fileset Template: " + fs_info['data'][0]['name'])
             dprint("\n" + str(fs_info['data'][0]))
             new_fs = rubrik.patch('v1', '/fileset_template/' + str(fs_info['data'][0]['id']), fs_info['data'][0], timeout=timeout)
+            log_write(log_file, "TEMPLATE_UPDATE," + fs_info['data'][0]['name'] + "," + str(fs_info['data'][0]['includes']))
             dprint("\nPATCH: " + str(new_fs))
