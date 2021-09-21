@@ -279,7 +279,6 @@ if __name__ == "__main__":
         vol_svm = vid_attrs.child_get_string('owning-vserver-name')
         dprint("VOL: " + volume + " // " + "SVM: " + vol_svm)
         if vol_svm not in svm_map.keys():
-            dprint("SKIPPING VOL:" + volume)
             continue
         try:
             dprint("ADDING VOL: " + volume)
