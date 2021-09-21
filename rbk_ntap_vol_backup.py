@@ -284,6 +284,7 @@ if __name__ == "__main__":
             dprint("ADDING VOL: " + volume)
             vol_list[vol_svm][volume] = {'path': junct_point,  'unix_qtree': False, 'ntfs_qtree': False}
         except:
+            dprint("ADDING NEW VOL: + volume")
             vol_list[vol_svm] = {}
             vol_list[vol_svm][volume] = {'path': junct_point,  'unix_qtree': False, 'ntfs_qtree': False}
     zapi = NaElement('qtree-list-iter')
