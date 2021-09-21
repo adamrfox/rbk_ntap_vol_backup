@@ -229,6 +229,7 @@ if __name__ == "__main__":
     except:
         usage()
     svm_map = get_svm_map(svm_map_file)
+    dprint("SVM_ MAP: " + str(svm_map))
     if not token:
         if not rubrik_user:
             rubrik_user = python_input("Rubrik User: ")
@@ -276,9 +277,12 @@ if __name__ == "__main__":
         junction = vid_attrs.child_get_string('junction-path')
         junct_point = junction
         vol_svm = vid_attrs.child_get_string('owning-vserver-name')
+        dprint("VOL: " + volume + " // " + "SVM: " + vol_svm)
         if vol_svm not in svm_map.keys():
+            dprint("SKIPPING VOL:" + volume)
             continue
         try:
+            dprint("ADDING VOL: " + volume)
             vol_list[vol_svm][volume] = {'path': junct_point,  'unix_qtree': False, 'ntfs_qtree': False}
         except:
             vol_list[vol_svm] = {}
