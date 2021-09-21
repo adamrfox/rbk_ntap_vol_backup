@@ -26,7 +26,9 @@ def usage():
 
 def dprint(message):
     if DEBUG:
-        print(message + "\n")
+        dfp = open(debug_file, "a")
+        dfp.write(message + "\n")
+        dfp.close()
 
 def ntap_set_err_check(out):
     if(out and (out.results_errno() != 0)) :
@@ -205,12 +207,15 @@ if __name__ == "__main__":
     NAS_DA = False
     CUSTOMER_MODS = True
     exceptions_file = "vol_exceptions.txt"
+    debug_file = "debug_data.txt"
 
     optlist, args = getopt.getopt(sys.argv[1:], 'Dc:t:n:hm:M', ['--DEBUG', '--rubrik_creds=', '--ntap_creds=',
                                                                  '--token=', '--help', '--mapfile=', '--mods'])
     for opt, a in optlist:
         if opt in ('-D', '--DEBUG'):
             DEBUG = True
+            dfp = open(debug_file, "w")
+            dfp.close()
         if opt in ('-c', '--rubrik_creds'):
             (rubrik_user, rubrik_password) = a.split(':')
         if opt in ('-n', '--ntap_creds'):
