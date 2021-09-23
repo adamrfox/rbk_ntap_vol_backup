@@ -158,14 +158,18 @@ def valid_rubrik_share(h_data, map, share_list, vol_list):
     return(False)
 
 def get_vol_name_from_rbk_share_list(rbk_sh_svm, rbk_sh, share_list, vol_list):
+    dprint("GET_VOL: " + str(rbk_sh))
     if rbk_sh['protocol'] == "NFS":
         for v in vol_list[rbk_sh_svm]:
             if vol_list[rbk_sh_svm][v]['path'] == rbk_sh['name']:
                 return(v)
         return("")
+    dprint("SMB_SHARE")
     for v in share_list[rbk_sh_svm]:
         if share_list[rbk_sh_svm][v]['name'] == rbk_sh['name']:
-             return(v)
+            vol = get_vol_from_path(vol_list, rbk_sh_svm, share_list[rbk_sh_svm][v]['path'])
+            dprint("SMB_VOL=" + vol)
+            return(vol)
     return("")
 
 def create_fs_template(fst_host, fst_vol, fst_proto):
