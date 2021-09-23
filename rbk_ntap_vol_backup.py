@@ -314,9 +314,15 @@ if __name__ == "__main__":
         q_svm = q.child_get_string('vserver')
         dprint("QTREE CHECK: SVM: " + q_svm + " // VOL: " + q_vol + " // PATH: " + q_path)
         if q_sec == "unix":
-            vol_list[q_svm][q_vol]['unix_qtree'] = True
+            try:
+                vol_list[q_svm][q_vol]['unix_qtree'] = True
+            except:
+                continue
         else:
-            vol_list[q_svm][q_vol]['ntfs_qtree'] = True
+            try:
+                vol_list[q_svm][q_vol]['ntfs_qtree'] = True
+            except:
+                continue
         try:
             qtree_list[q_svm][q_vol][q_path] = {'security': q_sec}
         except:
