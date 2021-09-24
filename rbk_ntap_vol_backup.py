@@ -429,7 +429,7 @@ if __name__ == "__main__":
                 v_name = get_vol_name_from_rbk_share_list(rbk_sh_svm, rbk_sh, share_list, vol_list)
                 for q in qtree_list[rbk_sh_svm][v_name]:
                     if qtree_list[rbk_sh_svm][v_name][q]['security'] != "unix":
-                        include_list.append("/" + q + "/**")
+                        include_list.append("\\" + q + "\\**")
             if collections.Counter(include_list) == collections.Counter(fs_info['data'][0]['includes']):
                 print("Template: " + fs_info['data'][0]['name'] + " : " + "OK")
                 log_write(log_file, "TEMPLATE_STATUS," + fs_info['data'][0]['name'] + ",No Change")
