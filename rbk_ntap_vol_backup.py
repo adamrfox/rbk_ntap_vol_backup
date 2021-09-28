@@ -98,9 +98,11 @@ def purge_lists(qtree_list, vol_list):
                 try:
                     if 'b' not in vf[2]:
                         if not vol_exceptions or not is_exception(vol_exceptions, svm, vol):
+                            dprint("Purging vol " + vol + ": bad pattern/not exception")
                             continue
                 except IndexError:
                     if not vol_exceptions or not is_exception(vol_exceptions, svm, vol):
+                        dprint("Puring vol " + vol + ": bad pattern/not exception [2]")
                         continue
             if vol_list[svm][vol]['unix_qtree'] and vol_list[svm][vol]['ntfs_qtree']:
                 try:
@@ -108,6 +110,8 @@ def purge_lists(qtree_list, vol_list):
                 except:
                     new_vol_list[svm] = {}
                     new_vol_list[svm][vol] = {'path': vol_list[svm][vol]['path']}
+            else:
+                dprint("Puring vol " + vol + ": no mixed trees")
 
     dprint("\nOLD_QTREE_LIST:" + str(qtree_list))
     for svm in qtree_list:
@@ -288,12 +292,13 @@ if __name__ == "__main__":
         vol_svm = vid_attrs.child_get_string('owning-vserver-name')
         dprint("VOL: " + volume + " // " + "SVM: " + vol_svm)
         if vol_svm not in svm_map.keys():
+            dprint("Skipping " + vol_svm + ":" + volume + ": not in map file")
             continue
         try:
             dprint("ADDING VOL: " + volume)
             vol_list[vol_svm][volume] = {'path': junct_point,  'unix_qtree': False, 'ntfs_qtree': False}
         except:
-            dprint("ADDING NEW VOL: + volume")
+            dprint("ADDING NEW VOL:" + volume)
             vol_list[vol_svm] = {}
             vol_list[vol_svm][volume] = {'path': junct_point,  'unix_qtree': False, 'ntfs_qtree': False}
     zapi = NaElement('qtree-list-iter')
