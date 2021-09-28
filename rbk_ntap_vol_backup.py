@@ -216,6 +216,7 @@ if __name__ == "__main__":
     CUSTOMER_MODS = True
     exceptions_file = "vol_exceptions.txt"
     debug_file = "debug_data.txt"
+    ntap_max_records = 5000
 
     optlist, args = getopt.getopt(sys.argv[1:], 'Dc:t:n:hm:M', ['--DEBUG', '--rubrik_creds=', '--ntap_creds=',
                                                                  '--token=', '--help', '--mapfile=', '--mods'])
@@ -280,7 +281,7 @@ if __name__ == "__main__":
     xi2.child_add_string('junction-path', '<junction-path>')
     xi2.child_add_string('name', '<name>')
     xi2.child_add_string('owning-vserver-name', '<owning-vserver-name>')
-    zapi.child_add_string("max-records", 100000)
+    zapi.child_add_string("max-records", ntap_max_records)
     out = netapp.invoke_elem(zapi)
     ntap_invoke_err_check(out, "volume-get-iter")
     vol_attrs = out.child_get('attributes-list').children_get()
@@ -310,7 +311,7 @@ if __name__ == "__main__":
     xi1.child_add_string('security-style', '<security-style>')
     xi1.child_add_string('volume', '<volume>')
     xi1.child_add_string('vserver', '<vserver>')
-    zapi.child_add_string('max-records', 100000)
+    zapi.child_add_string('max-records', ntap_max_records)
     out = netapp.invoke_elem(zapi)
     ntap_invoke_err_check(out, "qtree-list-iter")
     qtree_attrs = out.child_get('attributes-list').children_get()
@@ -357,7 +358,7 @@ if __name__ == "__main__":
     xi1.child_add_string('share-name', '<share-name>')
     xi1.child_add_string('volume', '<volume>')
     xi1.child_add_string('vserver', '<vserver>')
-    zapi.child_add_string('max-records', 100000)
+    zapi.child_add_string('max-records', ntap_max_records)
     out = netapp.invoke_elem(zapi)
     ntap_invoke_err_check(out, "cifs-share-get-iter")
     shares_attrs = out.child_get('attributes-list').children_get()
